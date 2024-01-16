@@ -1,0 +1,83 @@
+---
+title: "mini-essay-2"
+author: "Jasmine"
+format: html
+---
+#### Preamble ####
+# Purpose: Read in data from opendatatoronto and make 
+# a graph of the number of seats each party won.
+# Author: Shuhan Yang
+# Date: 15 January 2024
+# Prerequisites: -.
+
+```{r}
+#### Workspace setup ####
+#install.packages("tidyverse")
+#install.packages("janitor")
+#install.packages("usethis")
+#install.packages("gitcreds")
+#install.packages("opendatatoronto")
+#install.packages("knitr")
+
+library(knitr)
+library(janitor)
+library(lubridate)
+library(opendatatoronto)
+library(tidyverse)
+```
+
+```{r}
+# create Personal Access Token (PAT) to link  with GitHub account
+usethis::create_github_token()
+```
+
+```{r}
+gitcreds::gitcreds_set()
+```
+
+```{r}
+#### Acquire ####
+toronto_shelters <-
+  # Each package is associated with a unique id found in the "For 
+  # Developers" tab of the relevant page from Open Data Toronto
+  # https://open.toronto.ca/dataset/daily-shelter-overnight-service-occupancy-capacity/
+  list_package_resources("21c83b32-d5a8-4106-a54f-010dbe49f6f2") |>
+  # Within that package, we are interested in the 2022 dataset
+  filter(name == 
+    "daily-shelter-overnight-service-occupancy-capacity-2022.csv") |>
+  # Having reduced the dataset to one row we can get the resource
+  get_resource()
+
+write_csv(
+  x = toronto_shelters,
+  file = "toronto_shelters.csv"
+)
+
+#head(toronto_shelters)
+```
+
+```{r}
+toronto_shelters_clean <-
+  clean_names(toronto_shelters) |>
+  mutate(occupancy_date = ymd(occupancy_date)) |> 
+  select(occupancy_date, occupied_beds)
+
+#head(toronto_shelters_clean)
+```
+
+```{r}
+write_csv(
+  x = toronto_shelters_clean,
+  file = "cleaned_toronto_shelters.csv"
+)
+```
+
+```{r}
+toronto_shelters_clean |>
+  ggplot(aes(x = occupancy_date)) +
+  geom_bar() +
+  theme_minimal() + # Make the theme neater
+  labs(x = "Date", y = "Number of Beds Occupied") # Make labels more meaningful
+```
+
+
